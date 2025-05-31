@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Love Messages 3D - Faster Music Start</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #08081a; color: white; font-family: 'Arial', sans-serif; }
+        #background-music { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <!-- Thêm preload="auto" -->
+    <audio id="background-music" src="motdoi.mp3" autoplay loop preload="auto">
+        Trình duyệt của bạn không hỗ trợ phát âm thanh.
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOMContentLoaded event fired.");
+
+            const music = document.getElementById('background-music');
+            if (music) {
+                // Trình duyệt sẽ cố gắng autoplay dựa trên thuộc tính của thẻ audio
+                // Đoạn mã play() ở đây chủ yếu để bắt lỗi và thử lại nếu autoplay bị chặn
+                const playPromise = music.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        console.log("Audio play initiated by autoplay or JS.");
+                    }).catch(error => {
+                        console.warn("Autoplay was prevented by browser:", error);
+                        // Thử phát lại sau khi có tương tác click đầu tiên
+                        const playOnClick = () => {
+                            music.play().then(() => {
+                                console.log("Audio played successfully after user interaction.");
+                            }).catch(e => console.warn("Could not play audio even after click:", e));
+                            document.body.removeEventListener('click', playOnClick); // Xóa listener sau khi đã thử
+                        };
+                        document.body.addEventListener('click', playOnClick, { once: true });
+                    });
+                }
+            } else {
+                console.warn("Audio element not found.");
+            }
+
+            // ... (PHẦN CÒN LẠI CỦA MÃ JAVASCRIPT GIỮ NGUYÊN NHƯ PHIÊN BẢN TRƯỚC) ...
+            // (Bao gồm khai báo floatingObjects, loveMessages, neonColors, scene, camera, renderer, controls, stars, fontLoader,
+            // các hàm createTextMaterials, createHeartShape, heartGeometry, heartMaterials, createObject,
+            // clearAllFloatingObjects, changeTextColor, startEffect, animate, và window.addEventListener('resize'))
+
+            // Để mã này không quá dài, tôi sẽ không lặp lại toàn bộ phần JavaScript đó ở đây.
+            // Bạn chỉ cần đảm bảo đã thêm preload="auto" vào thẻ <audio> như trên,
+            // và phần JavaScript xử lý nhạc ở đầu DOMContentLoaded được cập nhật như trên.
+            // Phần còn lại của logic Three.js của bạn giữ nguyên.
+
+            // Ví dụ, phần cuối của script của bạn sẽ như thế này:
+            const floatingObjects = [];
+            const baseLoveMessages = [
+                "I miss you", "I love you", "You are my sunshine", "Always and forever", "My heart is yours",
+                "You complete me", "Forever yours", "My one and only", "Can't live without you",
+                "You're my everything", "Soulmate", "True love", "Crazy for you", "Head over heels",
+                "My dream come true", "With all my love", "You light up my life", "My precious",
+                "Love of my life", "Simply <3", "You are amazing", "My star", "My world",
+                "Duy <3 Linh", "Hoang Linh is my sunshine", "<3 Hoang Linh",
+                "Our Love Story", "Together Forever", "My Soul's Desire", "You & Me", "Infinite Love"
+            ];
+            const specialMessage1 = "Duy <3 Linh"; const specialMessage2 = "<3 Hoang Linh"; const specialMessage3 = "Hoang Linh is my sunshine";
+            let messagePool = [...baseLoveMessages];
+            for (let i = 0; i < 3; i++) { messagePool.push(specialMessage1); messagePool.push(specialMessage2); }
+            for (let i = 0; i < 2; i++) { messagePool.push(specialMessage3); }
+
+            const neonColors = [0xff007f, 0x00e5ff, 0x39ff14, 0xffea00, 0xff6600, 0xbf00ff];
+            let currentNeonColorIndex = 0; let currentColor = neonColors[currentNeonColorIndex];
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1, 20); 
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; controls.dampingFactor = 0.03;
+            controls.autoRotate = true; controls.autoRotateSpeed = 0.05;
+            controls.target.set(0, -1.5, 0);
+
+            const starGeometry = new THREE.BufferGeometry();
+            const starVertices = [];
+            for (let i = 0; i < 25000; i++) { 
+                starVertices.push(THREE.MathUtils.randFloatSpread(500), THREE.MathUtils.randFloatSpread(500), THREE.MathUtils.randFloatSpread(500));
+            }
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const starMaterial = new THREE.PointsMaterial({ color: 0x8899dd, size: 0.15, transparent: true, opacity: 0.7 });
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+
+            const fontLoader = new THREE.FontLoader();
+            let loadedFont = null;
+            
+            let objectInterval = null; let mainTimeout = null; let colorChangeInterval = null;
+
+            function createTextMaterials() {
+                const mainMaterial = new THREE.MeshBasicMaterial({ color: currentColor, transparent: true, opacity: 0.95, side: THREE.DoubleSide });
+                const glowMaterial = new THREE.MeshBasicMaterial({ color: currentColor, transparent: true, opacity: 0.22, side: THREE.DoubleSide });
+                return { mainMaterial, glowMaterial };
+            }
+
+            function createHeartShape() {
+                const shape = new THREE.Shape();
+                shape.moveTo(0.25, 0.25); shape.bezierCurveTo(0.25, 0.25, 0.2, 0, 0, 0);
+                shape.bezierCurveTo(-0.3, 0, -0.3, 0.35, -0.3, 0.35); shape.bezierCurveTo(-0.3, 0.55, -0.1, 0.77, 0.25, 0.95);
+                shape.bezierCurveTo(0.6, 0.77, 0.8, 0.55, 0.8, 0.35); shape.bezierCurveTo(0.8, 0.35, 0.8, 0, 0.5, 0);
+                shape.bezierCurveTo(0.35, 0, 0.25, 0.25, 0.25, 0.25);
+                return shape;
+            }
+            const heartGeometry = new THREE.ShapeGeometry(createHeartShape());
+            const heartMaterials = neonColors.map(color => new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+
+
+            function createObject(type) {
+                let mesh;
+                let initialY = 20 + Math.random() * 15; 
+                let initialX = (Math.random() - 0.5) * 40; 
+                let initialZ = (Math.random() - 0.5) * 25; 
+                let scale = 1;
+                if (type === 'text') {
+                    if (!loadedFont) { console.warn("createObject called but font not loaded."); return; }
+                    const randomMessage = messagePool[Math.floor(Math.random() * messagePool.length)];
+                    const textGeom = new THREE.TextGeometry(randomMessage, { font: loadedFont, size: 0.9, height: 0.005, curveSegments: 4, bevelEnabled: false });
+                    textGeom.center();
+                    const { mainMaterial, glowMaterial } = createTextMaterials();
+                    mesh = new THREE.Mesh(textGeom, mainMaterial);
+                    const glowMesh = new THREE.Mesh(textGeom.clone(), glowMaterial);
+                    glowMesh.scale.multiplyScalar(1.08);
+                    mesh.add(glowMesh);
+                    scale = 1 + (Math.random() - 0.5) * 0.05;
+                } else if (type === 'heart') {
+                    const randomHeartMaterial = heartMaterials[Math.floor(Math.random() * heartMaterials.length)];
+                    mesh = new THREE.Mesh(heartGeometry, randomHeartMaterial.clone()); 
+                    scale = 0.35 + Math.random() * 0.35;
+                    mesh.rotation.x = Math.PI;
+                }
+                if (!mesh) return;
+                mesh.scale.set(scale, scale, scale); mesh.position.set(initialX, initialY, initialZ);
+                if (type === 'text') { mesh.rotation.set(0, 0, 0); }
+                scene.add(mesh);
+                floatingObjects.push({
+                    mesh: mesh, type: type, life: 350 + Math.random() * 100,
+                    velocity: new THREE.Vector3((Math.random() - 0.5) * 0.0015, -0.052 - Math.random() * 0.064, (Math.random() - 0.5) * 0.0005),
+                    rotationSpeed: type === 'heart' ? new THREE.Vector3(0, (Math.random() - 0.5) * 0.008, 0) : new THREE.Vector3(0, 0, 0) 
+                });
+            }
+
+            function clearAllFloatingObjects() {
+                floatingObjects.forEach(obj => {
+                    scene.remove(obj.mesh);
+                    if (obj.mesh.geometry) obj.mesh.geometry.dispose();
+                    if (obj.mesh.material) obj.mesh.material.dispose();
+                    if (obj.mesh.children.length > 0 && obj.mesh.children[0].isMesh) {
+                        if (obj.mesh.children[0].geometry) obj.mesh.children[0].geometry.dispose();
+                        if (obj.mesh.children[0].material) obj.mesh.children[0].material.dispose();
+                    }
+                });
+                floatingObjects.length = 0;
+            }
+
+            function changeTextColor() {
+                currentNeonColorIndex = (currentNeonColorIndex + 1) % neonColors.length;
+                currentColor = neonColors[currentNeonColorIndex];
+                floatingObjects.forEach(obj => {
+                    if (obj.type === 'text' && obj.mesh && obj.mesh.material) {
+                        obj.mesh.material.color.setHex(currentColor);
+                        if (obj.mesh.children.length > 0 && obj.mesh.children[0].isMesh && obj.mesh.children[0].material) {
+                            obj.mesh.children[0].material.color.setHex(currentColor);
+                        }
+                    }
+                });
+            }
+
+            function startEffect() {
+                console.log("startEffect called."); 
+                if (!loadedFont) { 
+                    console.warn("Font not loaded yet, retrying startEffect in 500ms.");
+                    setTimeout(startEffect, 500); 
+                    return; 
+                }
+                if (objectInterval) clearInterval(objectInterval);
+                if (colorChangeInterval) clearInterval(colorChangeInterval);
+                clearAllFloatingObjects();
+
+                objectInterval = setInterval(() => {
+                    const objectType = Math.random() < 0.88 ? 'text' : 'heart';
+                    createObject(objectType);
+                }, 75);
+
+                changeTextColor(); 
+                colorChangeInterval = setInterval(changeTextColor, 5000); 
+            }
+
+            fontLoader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_bold.typeface.json',
+                (font) => { 
+                    loadedFont = font; 
+                    console.log("Font loaded successfully. Calling startEffect...");
+                    startEffect(); 
+                },
+                undefined, 
+                (error) => { 
+                    console.error('Error loading font:', error); 
+                    alert("Error loading font. Effects cannot start.");
+                }
+            );
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                for (let i = floatingObjects.length - 1; i >= 0; i--) {
+                    const obj = floatingObjects[i];
+                    if (!obj.mesh) { floatingObjects.splice(i, 1); continue; }
+                    obj.mesh.position.add(obj.velocity);
+                    obj.mesh.rotation.x += obj.rotationSpeed.x;
+                    obj.mesh.rotation.y += obj.rotationSpeed.y;
+                    obj.mesh.rotation.z += obj.rotationSpeed.z;
+                    obj.life--;
+                    const distY = Math.abs(obj.mesh.position.y);
+                    let opacityFactor = 1;
+                    if (distY > 18) { opacityFactor = Math.max(0, 1 - (distY - 18) / 12); } 
+                    if (obj.mesh.material) {
+                        const baseOpacity = (obj.type === 'text' ? 0.95 : 0.8);
+                        obj.mesh.material.opacity = Math.max(0, Math.min(opacityFactor, obj.life / 180)) * baseOpacity;
+                    }
+                    if (obj.mesh.children.length > 0 && obj.mesh.children[0].isMesh && obj.mesh.children[0].material) {
+                        obj.mesh.children[0].material.opacity = Math.max(0, Math.min(opacityFactor, obj.life / 180)) * 0.22;
+                    }
+                    if (obj.life <= 0 || obj.mesh.position.y < -30) {
+                        scene.remove(obj.mesh);
+                        if (obj.mesh.geometry) obj.mesh.geometry.dispose();
+                        if (obj.mesh.material) obj.mesh.material.dispose();
+                        if (obj.mesh.children.length > 0 && obj.mesh.children[0].isMesh) {
+                            if (obj.mesh.children[0].geometry) obj.mesh.children[0].geometry.dispose();
+                            if (obj.mesh.children[0].material) obj.mesh.children[0].material.dispose();
+                        }
+                        floatingObjects.splice(i, 1);
+                    }
+                }
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate(); 
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+            });
+
+        });
+    </script>
+</body>
+</html>
